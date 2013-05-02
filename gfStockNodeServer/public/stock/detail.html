@@ -1,0 +1,472 @@
+ <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+		<title>股票详情</title>
+		<script src="/js/jquery.js" type="text/javascript"></script>
+		<script src="/js/chart.js" type="text/javascript"></script>
+		<script src="/js/date-format.js"></script>
+		<script src="/js/bson.js"></script>
+		<script src="/js/common.js"></script>
+		
+		<link href="/css/common.css" rel="stylesheet" type="text/css" />
+		<link href="/css/stock.css" rel="stylesheet" type="text/css" />
+		<style type="text/css">
+			.chart{
+				background:#fff;
+			}
+			/* Overlay */
+			
+		</style>
+	</head>
+	
+	<body>
+		<div class="wrap">
+			<div class="stock-head">
+				<div class="stock-head-title">
+					<h1 class="name" id="stock_name">-</h1>
+					<span class="code" id="stock_code">-</span>
+				</div>
+				<div class="stock-head-info">
+					<div id="stock-head-info" class="left up">
+						<span id="stock_price">-</span>
+						<span id="stock_arrow" class="arrow"></span>
+						<span id="stock_pencent">-</span>
+						<br />
+						<span id="stock_time">-</span>
+					</div>
+					<div class="right">
+						<ul class="stock_info_detail">
+							<li>
+								
+								<span class="tip" >流通量:</span>
+								<span class="value" id="stock_start_total">-</span>
+							</li>
+							<li>
+								<span class="tip" >开盘价:</span>
+								<span class="value" id="stock_start_price">-</span>
+								<span class="tip">最高价:</span>
+								<span class="value up" id="stock_high_price">-</span>
+								<span class="tip">最低价:</span>
+								<span class="value down" id="stock_low_price">-</span>
+							</li>
+						</ul>
+					</div>
+					<div class="clear"></div>
+				</div>
+			</div>
+			
+			<!-- content -->
+			<div class="stock-content">
+				<div class="left">
+					<div id="segment" class="segment ui-corner-br ui-corner-bl ui-corner-tr ui-corner-tl">
+						<span class="choose" value="60000" >1分线</span>
+						<span value="300000" >5分线</span>
+						<span  value="600000" >10分线</span>
+						<span  value="1200000" >20分线</span>
+						<span  value="1800000" >30分线</span>
+						<span class="segment_last" value="3600000" >1小时线</span>
+					</div>
+					<canvas id="chart" class="chart" width="600" height="300">
+					</canvas>
+					
+					<div id="market_info" class="market_info down">
+						<span>上证指数:</span>
+						<span id="market_info_num">-</span>
+						<span id="market_info_arrow" class="arrow down"></span>
+						<span id="market_info_pencent">-</span>
+					</div>
+				</div>
+				<div class="right">
+					<div class="right_tab">
+						<h2 class="title">报价行情</h2>
+						<ul class="trade_info">
+							<li class="saleList">
+								<span class="tip">卖五</span>
+								<span class="price">-</span>
+								<span class="num">-</span>
+							</li>
+							<li  class="saleList">
+								<span class="tip">卖四</span>
+								<span class="price">-</span>
+								<span class="num">-</span>
+							</li>
+							<li  class="saleList">
+								<span class="tip">卖三</span>
+								<span class="price down">-</span>
+								<span class="num">-</span>
+							</li>
+							<li  class="saleList">
+								<span class="tip">卖二</span>
+								<span class="price up">-</span>
+								<span class="num">-</span>
+							</li>
+							<li  class="saleList">
+								<span class="tip">卖一</span>
+								<span class="price">-</span>
+								<span class="num">-</span>
+							</li>
+							<li class="current">
+								<span class="tip current">当前</span>
+								<span class="price" id="trade_info_current_price">-</span>
+								<span class="num"></span>
+							</li>
+							<li class="buyList">
+								<span class="tip">买一</span>
+								<span class="price">-</span>
+								<span class="num">-</span>
+							</li>
+							<li class="buyList">
+								<span class="tip">买二</span>
+								<span class="price">-</span>
+								<span class="num">-</span>
+							</li>
+							<li class="buyList">
+								<span class="tip">买三</span>
+								<span class="price">-</span>
+								<span class="num">-</span>
+							</li>
+							<li class="buyList">
+								<span class="tip">买四</span>
+								<span class="price">-</span>
+								<span class="num">-</span>
+							</li>
+							<li class="buyList">
+								<span class="tip">买五</span>
+								<span class="price">-</span>
+								<span class="num">-</span>
+							</li>
+						</ul>
+					</div>
+					
+					<div class="right_tab">
+						<h2 class="title">公告信息</h2>
+						<ul class="trade_info gf_info" id="notice_list">
+							<li>欢迎使用</li>
+						</ul>
+					</div>
+				</div>
+				<div class="clear"></div>
+			</div>
+		</div>
+		
+		<script>
+			var lineChart=new LineChart();
+			lineChart.yTime=60000;
+			function drawChart(time,price,index){
+				if(typeof time !="undefined"){
+					lineChart.addPoint(time,price/100,index);
+				}
+				//data
+				/*
+				var newX = new Date().getTime();
+				var newY = Math.floor(Math.random()*200);
+				lineChart.addPoint(newX,newY);
+				*/
+				var canvas  = document.getElementById("chart");
+				var context = canvas.getContext("2d");
+				
+				clearCanvas(canvas);
+				
+				lineChart.draw(35,30,550,250,context);
+				
+				//setTimeout(drawChart,1000);
+			}
+			
+			function addChartHistory(data){
+				for(var i=0;i<data.length;i++){
+					var p = data[i];
+					lineChart.addPoint(p['x'],p['y']/100,p['index']);					
+				}
+				drawChart();
+			}
+			
+			$(document).ready(
+					init
+			);
+			
+			var stockCode=null;
+			function init(){
+				var params=parseUrlParam();
+				stockCode = params['stock'];
+				if(typeof stockCode =="undefined"){
+					alert("unknow stockCode");
+					
+					return;
+				}
+				
+				initWebSocket(stockCode);
+				drawChart();
+				
+				$("#segment span").bind("click",function(){
+					var my=$(this);
+					var arr = $("#segment span");
+					for(var i=0;i<arr.length;i++){
+						var obj = $(arr[i]);
+						obj.removeClass("choose");
+					}
+					my.addClass("choose");
+					
+					var v = my.attr("value");
+					lineChart.yTime=parseInt(v);
+					drawChart();
+				});
+				
+			}
+			
+			
+			var BSON =bson().BSON;
+			var webSocket=null;
+			
+			function initWebSocket(){
+				connect();
+			}
+
+
+			function writeScreen(str){
+				console.log(str);
+			}
+
+			function sendScreen(str){
+				writeScreen("send "+str);
+			}
+
+			function recvScreen(str){
+				//writeScreen("recv "+str);
+			}
+
+			function clearError(){
+				
+			}
+			function showError(str){
+				console.log(str);
+			}
+
+			function connect(){
+				var url = "ws://"+window.location.host;
+				
+				//close 
+				closeSocket();
+				
+				try{
+					webSocket=new WebSocket(url);
+					webSocket.binaryType = "arraybuffer";
+					webSocket.onopen=onOpen;
+					webSocket.onmessage=onMessage;
+					webSocket.onclose=onClose;
+					webSocket.onerror=onError;
+				}catch(e){
+					showError(e.message);
+				}
+			}
+
+			function onOpen(ev){
+				writeScreen("open");
+				send({"msgId":"addTag","tag":stockCode});
+			}
+
+			function onMessage(ev){
+				var arrayBuffer = ev.data;
+			    var bytes = new Uint8Array(arrayBuffer);
+			    
+			    var obj = BSON.deserialize(bytes);
+			    dispatchMsg(obj);
+			}
+
+			function onClose(ev){
+				closeSocket();
+				writeScreen("close");
+				setTimeout(connect,3000);
+			}
+
+			function onError(ev){
+				showError(ev);
+				closeSocket();
+				
+				writeScreen("error:"+ev.data);
+			}
+
+			function closeSocket(){
+				if(webSocket!=null && webSocket.readyState!=WebSocket.CLOSED){
+					try{
+						webSocket.close();
+					}catch(e){}
+				}
+			}
+
+			function send(msg){
+				var bs =BSON.serialize(msg, false, true, false);
+				try{
+					webSocket.send(bs);
+				}catch(e){
+					showError(e.message);
+					closeSocket();
+				}
+			}
+
+			function dispatchMsg(msg){
+				recvScreen(JSON.stringify(msg));
+				
+				if(msg['msgId']=="notice"){
+					showNotice(msg);
+				}else if(msg['msgId']=="stock"){
+					showStock(msg);
+				}else if(msg['msgId']=="history"){
+					console.log("history");
+					addChartHistory(msg['data']);
+				}
+			}
+			
+			function showStock(stock){
+				drawChart(stock['priceTime'],stock['price'],stock['index']);
+				
+				$("#stock_name").html(stock['name']);
+				$("#stock_code").html(stock['code']);
+				
+				$("#stock_price").html(formatMoney(stock['price']));
+				$("#stock_start_price").html(formatMoney(stock['startPrice']));
+				$("#stock_high_price").html(formatMoney(stock['highPrice']));
+				$("#stock_low_price").html(formatMoney(stock['lowPrice']));
+				$("#stock_start_total").html(stock['total']);
+				
+				var pencent = Math.abs(stock['price']-stock['startPrice']);
+				$("#stock_pencent").html(formatPencent(pencent/stock['startPrice']));
+				
+				var stockHeadInfoObj = $("#stock-head-info");
+				if(stock['price']>=stock['startPrice']){
+					//red
+					stockHeadInfoObj.removeClass("down");
+					stockHeadInfoObj.addClass("up");
+				}else{
+					//green
+					//red
+					stockHeadInfoObj.removeClass("up");
+					stockHeadInfoObj.addClass("down");
+				}
+				
+				//hight low price
+				var stockHighPriceObj = $("#stock_high_price");
+				if(stock['highPrice']>=stock['startPrice']){
+					stockHighPriceObj.removeClass("down");
+					stockHighPriceObj.addClass("up");
+				}else{
+					stockHighPriceObj.removeClass("up");
+					stockHighPriceObj.addClass("down");
+				}
+				var stockLowPriceObj = $("#stock_low_price");
+				if(stock['lowPrice']>=stock['startPrice']){
+					stockLowPriceObj.removeClass("down");
+					stockLowPriceObj.addClass("up");
+				}else{
+					stockLowPriceObj.removeClass("up");
+					stockLowPriceObj.addClass("down");
+				}
+				
+				//time
+				$("#stock_time").html($.format.date(new Date(stock['priceTime']), "yyyy-MM-dd HH:mm:ss"));
+				
+				showCurrentPriceInfo(stock['price'],stock['startPrice']);
+				//saleList
+				var saleList = stock.saleList;
+				saleList.sort(function(a,b){
+					if(a.price>b.price) return 1;
+					else return -1;
+				});
+				
+				while(saleList.length<5){
+					saleList.push({"num":"-","price":"-"})
+				}
+				var saleListEle = $(".saleList");
+				for(var i=0;i<saleList.length;i++){
+					showSaleBuyInfo($(saleListEle[i]),saleList[saleList.length-1-i],stock['startPrice']);
+				}
+				
+				//buyList
+				var buyList = stock.buyList;
+				buyList.sort(function(a,b){
+					if(a.price>b.price) return -1;
+					else return 1;
+				});
+				
+				while(buyList.length<5){
+					buyList.push({"num":"-","price":"-"})
+				}
+				var buyListEle = $(".buyList");
+				for(var i=0;i<buyList.length;i++){
+					showSaleBuyInfo($(buyListEle[i]),buyList[i],stock['startPrice']);
+				}
+				
+				//指数
+				showIndex(stock.startShanghaiIndex,stock.shanghaiIndex);
+			}
+			
+			function showCurrentPriceInfo(currentPrice,startPrice){
+				var priceObj = $("#trade_info_current_price");
+				priceObj.removeClass("up");
+				priceObj.removeClass("down");
+				
+				if(currentPrice>startPrice){
+					priceObj.addClass("up");
+				}else if(currentPrice<startPrice){
+					priceObj.addClass("down");
+				}
+				priceObj.html(formatMoney(currentPrice));
+			}
+			
+			function showSaleBuyInfo(list,data,currentPrice){
+				var priceObj=$(list.find(".price")[0]);
+				var numObj = $(list.find(".num")[0]);
+				
+				numObj.html(data['num']);
+				priceObj.html(formatMoney(data['price']));
+				priceObj.removeClass("up");
+				priceObj.removeClass("down");
+				
+				if(data['price']=='-') return ;
+				
+				if(data['price']>currentPrice){
+					priceObj.addClass("up");
+				}else if(data['price']<currentPrice){
+					priceObj.addClass("down");
+				}
+			}
+			
+			//消息
+			function showNotice(msg){
+				var noticeListObj = $("#notice_list");
+				var time=$.format.date(new Date(msg['publicTime']), "yyyy-MM-dd HH:mm");
+				var title = time+" "+msg['title'];
+				var html="<li><p>"+title
+						+"</p></li>";
+				
+				noticeListObj.append(html);
+				noticeListObj.animate({scrollTop: noticeListObj.prop("scrollHeight")}, 1000);
+			}
+
+			//大盘
+			function showIndex(startIndex,index){
+				var div = Math.abs(startIndex-index);
+				var pencent = div/startIndex;
+				
+				var numObj = $("#market_info_num");
+				var arrowObj = $("#market_info_arrow");
+				var priceObj = $("#market_info_pencent");
+				
+				var marketNum = index;
+				numObj.html(formatDouble(marketNum));
+				priceObj.html(formatPencent(pencent));
+				
+				var marketObj=$("#market_info");
+				marketObj.removeClass("up");
+				marketObj.removeClass("down");
+				if(startIndex<index){
+					marketObj.addClass("up");
+				}else{
+					marketObj.addClass("down");
+				}
+			}
+			
+		</script>
+	</body>
+	
+</html>

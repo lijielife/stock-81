@@ -1,0 +1,377 @@
+ <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+		<title>股票行情</title>
+		<script src="/js/jquery.js" type="text/javascript"></script>
+		<script src="/js/chart.js" type="text/javascript"></script>
+		<script src="/js/date-format.js"></script>
+		<script src="/js/bson.js"></script>
+		<script src="/js/common.js"></script>
+		
+		<link href="/css/common.css" rel="stylesheet" type="text/css" />
+		<link href="/css/stock.css" rel="stylesheet" type="text/css" />
+		<style type="text/css">
+			.chart{
+				background:#fff;
+			}
+		</style>
+	</head>
+	
+	<body>
+		<div class="wrap">
+			<div class="stock-head">
+				<div class="stock-head-title">
+					<h1 class="name" id="stock_name">上证指数</h1>
+					<span class="code" id="stock_code"></span>
+				</div>
+				<div class="stock-head-info">
+					<div id="stock-head-info" class="left up">
+						<span id="stock_price">00.00</span>
+						<span id="stock_arrow" class="arrow"></span>
+						<span id="stock_pencent">00.00%</span>
+						<br />
+						<span id="stock_time">0000-00-00 00:00:00</span>
+					</div>
+					<div class="right">
+						<ul class="stock_info_detail">
+							<li>
+								<span class="tip" >昨日指数:</span>
+								<span class="value" id="stock_start_price">00.00</span>
+							</li>
+							<li>
+								<span class="tip">最高指数:</span>
+								<span class="value up" id="stock_high_price">00.00</span>
+								<span class="tip">最低指数:</span>
+								<span class="value down" id="stock_low_price">00.00</span>
+							</li>
+						</ul>
+					</div>
+					<div class="clear"></div>
+				</div>
+			</div>
+			
+			<!-- content -->
+			<div class="stock-content">
+				<div class="left">
+					<div id="segment" class="segment ui-corner-br ui-corner-bl ui-corner-tr ui-corner-tl">
+						<span class="choose" value="60000" >1分线</span>
+						<span value="300000" >5分线</span>
+						<span value="600000" >10分线</span>
+						<span value="1200000" >20分线</span>
+						<span  value="1800000" >30分线</span>
+						<span class="segment_last" value="3600000" >1小时线</span>
+					</div>
+					<canvas id="chart" class="chart" width="600" height="300">
+					</canvas>
+				</div>
+				<div class="right">
+					<div class="right_tab" >
+						<h2 class="title">公告信息</h2>
+						<ul class="trade_info gf_info" id="notice_list" style="height:260px;">
+							<li>欢迎使用,点击下面的股票进入股票页面</li>
+						</ul>
+					</div>
+				</div>
+				<div class="clear"></div>
+			</div>
+			
+			<div class="stock-bottom">
+				<div class="big_tab">
+						<h2 class="title">股票榜</h2>
+						<ul id="stock_list" class="list">
+							<li class="title">
+								<span class="name">名字</span>
+								<span>价格</span>
+								<span>涨幅</span>
+								<span>开盘价</span>
+								<span>最高价</span>
+								<span>最低价</span>
+							</li>
+						</ul>
+					</div>
+			</div>
+		</div>
+		
+		<script>
+			var lineChart=new LineChart();
+			lineChart.yTime=60000;
+			function drawChart(time,price,index){
+				if(typeof time !="undefined"){
+					lineChart.addPoint(time,price,index);
+				}
+				//data
+				/*
+				var newX = new Date().getTime();
+				var newY = Math.floor(Math.random()*200);
+				lineChart.addPoint(newX,newY);
+				*/
+				var canvas  = document.getElementById("chart");
+				var context = canvas.getContext("2d");
+				
+				clearCanvas(canvas);
+				
+				lineChart.draw(35,30,550,250,context);
+				
+				//setTimeout(drawChart,1000);
+			}
+			function addChartHistory(data){
+				for(var i=0;i<data.length;i++){
+					var p = data[i];
+					lineChart.addPoint(p['x'],p['y'],p['index']);					
+				}
+				drawChart();
+			}
+			
+			$(document).ready(
+					init
+			);
+			
+			function init(){
+				initWebSocket();
+				drawChart();
+				
+				$("#segment span").bind("click",function(){
+					var my=$(this);
+					var arr = $("#segment span");
+					for(var i=0;i<arr.length;i++){
+						var obj = $(arr[i]);
+						obj.removeClass("choose");
+					}
+					my.addClass("choose");
+					
+					var v = my.attr("value");
+					lineChart.yTime=parseInt(v);
+					drawChart();
+				});
+				
+			}
+			
+			
+			var BSON= bson().BSON;
+			var webSocket=null;
+			
+			function initWebSocket(){
+				connect();
+			}
+
+
+			function writeScreen(str){
+				//console.log(str);
+			}
+
+			function sendScreen(str){
+				writeScreen("send "+str);
+			}
+
+			function recvScreen(str){
+				writeScreen("recv "+str);
+			}
+
+			function clearError(){
+				
+			}
+			function showError(str){
+				console.log(str);
+			}
+
+			function connect(){
+				var url = "ws://"+window.location.host;
+				
+				//close 
+				closeSocket();
+				
+				try{
+					webSocket=new WebSocket(url);
+					webSocket.binaryType = "arraybuffer";
+					webSocket.onopen=onOpen;
+					webSocket.onmessage=onMessage;
+					webSocket.onclose=onClose;
+					webSocket.onerror=onError;
+				}catch(e){
+					showError(e.message);
+				}
+			}
+
+			function onOpen(ev){
+				writeScreen("open");
+				send({"msgId":"addTag","tag":"market"});
+			}
+
+			function onMessage(ev){
+				var arrayBuffer = ev.data;
+			    var bytes = new Uint8Array(arrayBuffer);
+			    
+			    var obj = BSON.deserialize(bytes);
+			    dispatchMsg(obj);
+			}
+
+			function onClose(ev){
+				closeSocket();
+				writeScreen("close");
+				setTimeout(connect,3000);
+			}
+
+			function onError(ev){
+				showError(ev);
+				closeSocket();
+				
+				writeScreen("error:"+ev.data);
+			}
+
+			function closeSocket(){
+				if(webSocket!=null && webSocket.readyState!=WebSocket.CLOSED){
+					try{
+						webSocket.close();
+					}catch(e){}
+				}
+			}
+
+			function send(msg){
+				var bs =BSON.serialize(msg, false, true, false);
+				try{
+					webSocket.send(bs);
+				}catch(e){
+					showError(e.message);
+					closeSocket();
+				}
+			}
+
+			function dispatchMsg(msg){
+				recvScreen(JSON.stringify(msg));
+				
+				if(msg['msgId']=="notice"){
+					showNotice(msg);
+				}else if(msg['msgId']=="market"){
+					showStock(msg);
+				}else if(msg['msgId']=="history"){
+					console.log("history");
+					addChartHistory(msg['data']);
+				}
+			}
+			
+			function showStock(stock){
+				drawChart(stock['publicTime'],stock['shanghaiIndex'],stock['index']);
+				
+				$("#stock_price").html(formatDouble(stock['shanghaiIndex']));
+				$("#stock_start_price").html(formatDouble(stock['startShanghaiIndex']));
+				$("#stock_high_price").html(formatDouble(stock['highShanghaiIndex']));
+				$("#stock_low_price").html(formatDouble(stock['lowShangghaiIndex']));
+				
+				var pencent = Math.abs(stock['shanghaiIndex']-stock['startShanghaiIndex']);
+				$("#stock_pencent").html(formatPencent(pencent/stock['startShanghaiIndex']));
+				
+				var stockHeadInfoObj = $("#stock-head-info");
+				if(stock['shanghaiIndex']>=stock['startShanghaiIndex']){
+					//red
+					stockHeadInfoObj.removeClass("down");
+					stockHeadInfoObj.addClass("up");
+				}else{
+					//green
+					//red
+					stockHeadInfoObj.removeClass("up");
+					stockHeadInfoObj.addClass("down");
+				}
+				
+				//hight low price
+				var stockHighPriceObj = $("#stock_hight_price");
+				if(stock['highShanghaiIndex']>=stock['startShanghaiIndex']){
+					stockHighPriceObj.removeClass("down");
+					stockHighPriceObj.addClass("up");
+				}else{
+					stockHighPriceObj.removeClass("up");
+					stockHighPriceObj.addClass("down");
+				}
+				var stockLowPriceObj = $("#stock_low_price");
+				if(stock['lowShangghaiIndex']>=stock['startShanghaiIndex']){
+					stockLowPriceObj.removeClass("down");
+					stockLowPriceObj.addClass("up");
+				}else{
+					stockLowPriceObj.removeClass("up");
+					stockLowPriceObj.addClass("down");
+				}
+				
+				//time
+				$("#stock_time").html($.format.date(new Date(stock['publicTime']), "yyyy-MM-dd HH:mm:ss"));
+				
+				//stockList
+				showStockList(stock['stockList']);
+			}
+			
+			//消息
+			function showNotice(msg){
+				var noticeListObj = $("#notice_list");
+				var time=$.format.date(new Date(msg['publicTime']), "yyyy-MM-dd HH:mm");
+				var title = time+" "+msg['title'];
+				var html="<li><p>"+title
+						+"</p></li>";
+				
+				noticeListObj.append(html);
+				noticeListObj.animate({scrollTop: noticeListObj.prop("scrollHeight")}, 1000);
+			}
+
+			function showStockList(list){
+				//remove
+				var listObj = $("#stock_list");
+				var stockList = listObj.find(".stock");
+				for(var i=0;i<stockList.length;i++){
+					var stockObj = $(stockList[i]);
+					stockObj.remove();
+				}
+				
+				var html="";
+				for(var i=0;i<list.length;i++){
+					var obj = list[i];
+					var startPrice=obj['startPrice'];
+					var price=obj['price'];
+					var highPrice=obj['highPrice'];
+					var lowPrice=obj['lowPrice'];
+					
+					html+="<li class='stock'>";
+					html+="<a target='_blank' href='/stock/detail.html?stock="+obj['code']+"'><span class='name'>"+obj['name']+"</span></a>";
+					
+					html+="<span class='";
+					if(price>startPrice){
+						html+="up";	
+					}else if(price<startPrice){
+						html+="down";	
+					}
+					html+="'>"+formatMoney(price)+"</span>";
+					
+					var pencent=(price-startPrice)/startPrice;
+					html+="<span class='";
+					if(price>startPrice){
+						html+="up";	
+					}else if(price<startPrice){
+						html+="down";	
+					}
+					html+="'>"+formatPencent(pencent)+"</span>";
+					
+					html+="<span class='";
+					html+="'>"+formatMoney(startPrice)+"</span>";
+					
+					html+="<span class='";
+					if(highPrice>startPrice){
+						html+="up";	
+					}else if(highPrice<startPrice){
+						html+="down";	
+					}
+					html+="'>"+formatMoney(highPrice)+"</span>";
+					
+					html+="<span class='";
+					if(lowPrice>startPrice){
+						html+="up";	
+					}else if(lowPrice<startPrice){
+						html+="down";	
+					}
+					html+="'>"+formatMoney(lowPrice)+"</span>";
+					
+					html+="</li>";
+				}
+				listObj.append(html);
+			}
+			
+		</script>
+	</body>
+	
+</html>
