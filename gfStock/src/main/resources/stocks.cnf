@@ -1,0 +1,6 @@
+#code , name , price , total , generator:random|crazy|ten
+9201, 中国轮船 ,10.50 , 300000 , ten
+9202, 广东教育 ,20.0 , 250000 , random
+9203, 广州足球 ,8.50 , 110000 , crazy
+9204, 广发1号 ,8.0 , 130000 , random
+9205, 市长大桥 ,6.0 , 100000 , random

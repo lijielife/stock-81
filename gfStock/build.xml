@@ -1,0 +1,152 @@
+<?xml version="1.0"?>
+<project name="apps" default="deploy" basedir=".">
+	
+	<!-- 
+	======================================================== 
+		设置build时需要的目录路径
+	========================================================
+	-->	
+	<property name="build" location="build"/>
+	<property name="source" location="${build}/source"/>
+	<property name="classes" location="${build}/classes"/>
+	<property name="target" location="target"/>
+	<property name="src" location="src"/>
+	<property name="resources" location="${src}/main/resources"/>
+	<property name="test_resources" location="${src}/test/resources"/>
+	<property name="lib" location="libs"/>
+	<property name="shell" location="shell"/>
+	
+	
+	<!-- deploy -->
+	<property name="zip-dir" location="E:\tmp\vm"/>
+	<property name="deploy-dir" location="E:\tmp\test4.com\ROOT"/>
+	
+	<!-- 
+	======================================================== 
+		声明core classpath
+	========================================================
+	-->	
+	<path id="core.classpath">
+		<fileset dir="${lib}">
+			<include name="**/*.jar" />
+			<include name="**/*.zip" />
+		</fileset>
+	</path>
+
+	<!-- 
+	======================================================== 
+		声明编译时使用的classpath
+	========================================================
+	-->	
+	<path id="build.classpath">
+		<path refid="core.classpath"/>
+	</path>
+	
+	<!-- 
+	======================================================== 
+		部署时使用的核心libs
+	========================================================
+	-->	
+	<fileset id="deploy.core.libs" dir="${lib}">
+		<include name="**/*.jar"/>
+	</fileset>	
+	
+	<!-- 
+	======================================================== 
+		清理build文件夹
+	========================================================
+	-->
+	<target name="clean">
+		<delete includeemptydirs="true" failonerror="no">
+		    <fileset dir="${build}"  includes="**/*">
+		    </fileset>
+			<fileset dir="${target}" includes="**/*">
+			</fileset>
+		</delete>
+	</target>
+	
+	<!-- 
+	======================================================== 
+		初始化
+	========================================================
+	-->
+	<target name="init" depends="clean">
+		<mkdir dir="${build}"/>
+		<mkdir dir="${target}"/>
+		<mkdir dir="${classes}"/>
+	</target>
+	
+	<!-- 
+	======================================================== 
+		编译代码
+	========================================================
+	-->
+	<target name="build" depends="init">
+		<!-- copy 代码过去 -->
+		<copy  todir="${source}" >
+					<fileset dir="${src}/main/java" >
+		    		</fileset>
+					<fileset dir="${src}/test/java" >
+					</fileset>
+		</copy>
+		
+		<javac   includes="**/*.java"  srcdir="${source}" destdir="${classes}" source="1.5" target="1.5" debug="true" encoding="utf8">
+			<classpath refid="build.classpath" />
+		</javac>
+	</target>
+		
+	<!-- 
+	======================================================== 
+		部署并打包
+	========================================================
+	-->
+	<target name="deploy" depends="build">
+		<!-- copy class-->
+		<copy todir="${target}/classes">
+			<fileset dir="${classes}" >
+				<include name="**/*.class"/>
+			</fileset>
+			<fileset dir="${resources}">
+			</fileset>
+		</copy>
+		
+		<copy todir="${target}/libs">
+			<fileset dir="${lib}" excludes="junit.jar,hamcrest-core-1.3.jar">
+			</fileset>
+		</copy>
+		
+		<!-- copy shell -->
+		<copy todir="${target}">
+			<fileset dir="${shell}">
+			</fileset>
+		</copy>
+		<touch file="${target}/app.log"/>
+		
+	    <!--
+		<zip destfile="${zip-dir}/job.zip">
+			            <fileset dir="${target}">
+			                <include name="**/*"/>
+			            </fileset>
+		</zip>
+		-->
+	</target>
+	
+	<target name="test" depends="build" >
+		<junit  haltonfailure="yes" >
+		<formatter type="brief" usefile="false" />
+		<classpath>
+            	<path>
+            		<path refid="core.classpath"/>
+            	</path>
+                <pathelement location="${lib}/" />
+                <pathelement location="build/classes" />
+		  </classpath>
+		  <batchtest fork="yes" >
+		    <fileset dir="${src}/test/java">
+		       <include name="**/*Test.java" />
+		       <include name="**/Test*.java" />
+		     </fileset>
+		  </batchtest>
+		</junit>
+	</target>
+</project>
