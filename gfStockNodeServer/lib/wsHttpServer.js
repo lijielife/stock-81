@@ -31,8 +31,9 @@ function start(){
 	    log.info("listen %s:%s",address.address,address.port);
 	});
 	
-	httpServer.on('error',function(){
-		log.info("error to start server");
+	httpServer.on('error',function(e){
+		log.info("error to start server %s",e);
+		throw e;
 	});
 	
 	//wsServer
@@ -55,18 +56,20 @@ function originIsAllowed(origin) {
 
 //ws
 function onRequest(request){
-	log.debug('Connection from origin %s',request.origin);
+	//log.debug('Connection from origin %s',request.origin);
  
     if (!originIsAllowed(request.origin)) {
       // Make sure we only accept requests from an allowed origin
       request.reject();
-      log.info(' Connection from origin ' + request.origin + ' rejected.');
+      //log.info(' Connection from origin ' + request.origin + ' rejected.');
       return;
     }
 
     var connection = request.accept(null, request.origin);
     var key = new Date().getTime()+"";
     var client=new Client(key,connection.remoteAddress,connection);
+    
+    log.info('accept client from ' + connection.remoteAddress);
     
     if(msgProcessor!=null){
 		msgProcessor.processWsHttpServerMsg(client,"accept");
