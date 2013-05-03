@@ -37,6 +37,7 @@ webSocket服务器与http服务器
 4、测试
 	安装mocha
 	#npm install -g mocha
+	#ln -s /usr/bin/nodejs /usr/bin/node
 	
 	运行测试
 	#mocha
