@@ -54,3 +54,15 @@ function parseUrlParam() {
   } 
    return query_string;
 };
+
+function createWebSocket(url){
+       var websocket =null;
+       if ('WebSocket' in window) {
+             websocket = new WebSocket(url);
+        }else if ('MozWebSocket' in window) {
+             websocket = new MozWebSocket(url);
+       }else {
+             alert("not support webSocket");
+       }
+     return websocket ;
+}
