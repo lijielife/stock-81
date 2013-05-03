@@ -68,7 +68,7 @@ public class TaskAction {
 	}
 
 	public static TaskAction createTimesTaskAction(String name,int times) {
-		return createTimesTaskAction(name,times, 0);
+		return createTimesTaskAction(name,times-1, 0);
 	}
 
 	public static TaskAction createAgainTaskAction(String name,long updateTime) {

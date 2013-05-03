@@ -37,16 +37,16 @@
 	测试：ant test
 	编译：ant
 	
-4、运行
+4、运行(运行消息队列服务器和行情生成器,两者同一个程序)
 	编译完成后，cd 入target目录，里面就是编译好的所有文件
 	
-	运行消息队列服务器和行情生成器
-	＃start.sh
+	运行消息队列服务器和行情生成器(两者同一个程序)
+	＃startAll.sh
+	查看日志
+	#tail -f app.log 
 	
 	其它shell意思
-	#startDaemon.sh 以daemon形式运行，不能交互
-	#startJmsServerStandalone.sh 单独启动消息队列服务器
-	#startStockStandalone.sh 单独启运行情生成器
+	#startAllDaemon.sh 以daemon形式运行，不能交互
 	
 5、交互命令参考
 	help 
@@ -58,4 +58,11 @@
 	addStock name price total [generator]
 	添加股票，name名字；price是价格，单位元；total是发行数量；generator是行情生成器生成数据
 	的规律，默认是random，随机生成；crazy，剧烈波动，上升和下跌；ten，波动在10%内。
-	
+
+6、分开运行(分别运行消息队列服务器和行情生成器)
+	单独启动消息队列服务器
+	#startJmsServer.sh 
+	单独启运行情生成器
+	#startStockGenerator.sh 
+	查看日志
+	#tail -f app.log 

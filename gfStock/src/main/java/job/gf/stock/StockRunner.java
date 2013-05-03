@@ -85,7 +85,6 @@ public class StockRunner {
 			}
 			
 		}while(true);
-		
 	}
 	
 	private static void printDone(){
@@ -101,7 +100,7 @@ public class StockRunner {
 		sb.append("broadcast msg\n");
 		sb.append("  --broadcast msg,ex:broadcast hello\n");
 		
-		sb.append("addStock name price(unit:yuan) total [random|crazy|ten]\n");
+		sb.append("addStock name price(unit:yuan) total(>100) [random|crazy|ten]\n");
 		sb.append("  --ex:addStock gf 10.8 100000\n");
 		sb.append("  --ex:addStock haha 22.3 100000 crazy\n");
 		sb.append("  --random,generate data is random\n");
@@ -129,6 +128,10 @@ public class StockRunner {
 			total=Integer.parseInt(params[2]);
 		}catch(Exception e){
 			return false;
+		}
+		
+		if(total<100){
+			total=100;
 		}
 		
 		int priceInt = (int) (price*100);

@@ -129,11 +129,17 @@ public class SimpleTagSubscribeClient implements ITagSubscribeClient {
 		ByteBuffer mBuffer = ByteBuffer.allocate(8192);
 		Selector mSelector = null;
 		SocketChannel mSocketChannel = null;
-		boolean mHasConnect;
+		
 		long mErrorSleepTime = 3000;// 1s
 		long mSleepTime = 1000;// 1s
 		MsgFrameParser mFrameParser = new MsgFrameParser();
 		boolean mIsDestory=false;
+		
+		static final int STATUS_INIT=0;
+		static final int STATUS_CONNECTING=2;
+		static final int STATUS_CONNECTED=3;
+		int connectStatus=STATUS_INIT;
+		
 		
 		public void destoryThread(){
 			mIsDestory=true;
@@ -142,43 +148,57 @@ public class SimpleTagSubscribeClient implements ITagSubscribeClient {
 		@Override
 		public void run() {
 			while (true) {
-				if (mIsDestory) {
-					mLog.info("destory the client");
-					break;
-				}
-
-				if (!mHasConnect) {
-					mLog.info("not connect to server,try to connect");
-
-					connectSocket();
-				}
-
 				// block
 				int n = 0;
 				try {
-					n = mSelector.select();
-				} catch (IOException e) {
+					if(connectStatus==STATUS_CONNECTED|| connectStatus==STATUS_CONNECTING && mSelector!=null)
+						n = mSelector.select();
+				} catch (Exception e) {
 					mLog.error("Selector.select", e);
+					closeSocket();
 				}
-				if (n == 0) {
-					if (mHasConnect && mMsgQueue.size() > 0) {
-						// registry
-						try {
-							mSocketChannel.register(mSelector,
-									SelectionKey.OP_READ
-											| SelectionKey.OP_WRITE);
-						} catch (ClosedChannelException e) {
+				
+				if (mIsDestory) {
+					mLog.info("destory the client");
+					closeSocket();
+					break;
+				}
+				
+
+				if(n==0){
+					if (connectStatus==STATUS_INIT) {
+						mLog.info("try to connect to Server");
+
+						connectSocket();
+					}else if(connectStatus==STATUS_CONNECTED ){
+						if(mSocketChannel!=null && mSocketChannel.isConnected()){
+							//connect is ok
+							if(mMsgQueue.size() > 0){
+								// registry
+								try {
+									mSocketChannel.register(mSelector,
+											SelectionKey.OP_READ
+													| SelectionKey.OP_WRITE);
+								} catch (ClosedChannelException e) {
+									closeSocket();
+								}
+							}
+						}else{
+							//not connect
 							closeSocket();
-							continue;
 						}
-					} else {
+					}else if(connectStatus==STATUS_CONNECTING){
+						closeSocket();
+					}else{
 						try {
 							Thread.sleep(mSleepTime);
 						} catch (InterruptedException e) {
 						}
-						continue;
 					}
+					
+					continue;
 				}
+				
 
 				Set<SelectionKey> selectionKeys = mSelector.selectedKeys();
 				if(selectionKeys.isEmpty()) continue;
@@ -199,23 +219,28 @@ public class SimpleTagSubscribeClient implements ITagSubscribeClient {
 				}
 			}
 			
-			closeSocket();
+			mLog.info("client destory");
 		}
 		
 		private void connectServer(SelectionKey selectKey){
 			SocketChannel channel = (SocketChannel) selectKey.channel();
 			
-			if (channel.isConnectionPending()) {  
 				try {
-					channel.finishConnect();
+					boolean result = channel.finishConnect();
 					
-					channel.register(mSelector,
-							SelectionKey.OP_READ);
-					
-					for(Integer tag:mTagList){
-						subscribeTag(tag);
+					if(result){
+						channel.register(mSelector,
+								SelectionKey.OP_READ);
+						
+						for(Integer tag:mTagList){
+							subscribeTag(tag);
+						}
+						mLog.info("connect sucess");
+						
+						connectStatus=STATUS_CONNECTED;
+					}else{
+						closeSocket();
 					}
-					mLog.info("connect sucess");
 				} catch (IOException e) {
 					mLog.error("error when finishConnect", e);
 					mLog.error("can not connect to server");
@@ -228,7 +253,6 @@ public class SimpleTagSubscribeClient implements ITagSubscribeClient {
 				}  
 				
 				//
-            }
 		}
 
 		private void readData(SelectionKey selectKey) {
@@ -330,37 +354,33 @@ public class SimpleTagSubscribeClient implements ITagSubscribeClient {
 				mSelector = Selector.open();
 				mSocketChannel = SocketChannel.open();
 				mSocketChannel.configureBlocking(false);
-				boolean result=mSocketChannel.connect(new InetSocketAddress(mHost, mPort));
+				mSocketChannel.connect(new InetSocketAddress(mHost, mPort));
+				/*
 				if(!result){
 					if (mSocketChannel.isConnectionPending()) {
-						mSocketChannel.finishConnect();
+						if(mSocketChannel.finishConnect()){
+							mHasConnect = false;;
+						}
 					}
-				}
+				}*/
+				
 				mSocketChannel.register(mSelector, SelectionKey.OP_CONNECT);
+				connectStatus=STATUS_CONNECTING;
 			} catch (IOException e1) {
 				mLog.error("error when connectSocket", e1);
-
-				if (mSelector != null) {
-					try {
-						mSelector.close();
-					} catch (IOException e) {
-					}
+				
+				closeSocket();
+				
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
 				}
-				if (mSocketChannel != null) {
-					try {
-						mSocketChannel.close();
-					} catch (IOException e) {
-					}
-				}
-
 			}
-
-			mHasConnect = true;
 		}
 
 		private void closeSocket() {
+			connectStatus=STATUS_INIT;
 			mLog.info("close socket");
-			mHasConnect = false;
 
 			if (mSelector != null) {
 				try {

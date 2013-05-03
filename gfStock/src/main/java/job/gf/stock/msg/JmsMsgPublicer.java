@@ -51,7 +51,7 @@ public class JmsMsgPublicer implements IMsgPublicer {
 
 	@Override
 	public void publicStockTradeInfo(MarketInfo marketInfo,Stock stock) {
-		log.debug("publicStockTradeInfo,stock code={}",stock.getCode());
+		//log.debug("publicStockTradeInfo,stock code={}",stock.getCode());
 		BasicBSONObject bson  = new BasicBSONObject();
 		bson.append("msgId", "stock");
 		bson.append("action", "list");

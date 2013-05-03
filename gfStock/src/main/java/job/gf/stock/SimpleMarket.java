@@ -132,7 +132,7 @@ public class SimpleMarket extends AbstractMarket {
 						log.warn("stocks.txt wrong params",e);
 					}
 					int priceInt = (int) (price*100);
-					if(total<=0) total=100;
+					if(total<=100) total=100;
 					if(priceInt<=0) priceInt=100;
 					
 					ITradeInfoGenerator tradeGenerator=null;
@@ -197,7 +197,7 @@ public class SimpleMarket extends AbstractMarket {
 						//run task
 						TaskAction ta = mTaskQueue.removeTask();
 						if(ta!=null){
-							log.debug("run task name={}",ta.getName());
+							//log.debug("run task name={}",ta.getName());
 							
 							runResult=runTask(ta);
 							if(runResult && ta.next()){
