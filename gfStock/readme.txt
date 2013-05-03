@@ -41,12 +41,12 @@
 	编译完成后，cd 入target目录，里面就是编译好的所有文件
 	
 	运行消息队列服务器和行情生成器(两者同一个程序)
-	＃startAll.sh
+	＃sh startAll.sh
 	查看日志
 	#tail -f app.log 
 	
 	其它shell意思
-	#startAllDaemon.sh 以daemon形式运行，不能交互
+	#sh startAllDaemon.sh 以daemon形式运行，不能交互
 	
 5、交互命令参考
 	help 
@@ -61,8 +61,8 @@
 
 6、分开运行(分别运行消息队列服务器和行情生成器)
 	单独启动消息队列服务器
-	#startJmsServer.sh 
+	#sh startJmsServer.sh 
 	单独启运行情生成器
-	#startStockGenerator.sh 
+	#sh startStockGenerator.sh 
 	查看日志
 	#tail -f app.log 
