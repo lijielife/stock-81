@@ -23,12 +23,6 @@ public class Runner {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		boolean daemon = false;
-		if (args != null && args.length > 1) {
-			if ("daemon".equals(args[0])) {
-				daemon = true;
-			}
-		}
 
 		// jmsServer
 		log.info("jmsServer starts");
@@ -56,58 +50,55 @@ public class Runner {
 		market.init();
 		market.run();
 
-		if (!daemon) {
-			// command
-			Scanner scan = new Scanner(System.in);
-			String line = null;
-			String commands[] = null;
-			printTip();
-			do {
-				boolean done = false;
-				line = scan.nextLine().trim();
-				if (line.length() == 0)
-					continue;
-				commands = line.split("\\s+", 2);
+		// command
+		Scanner scan = new Scanner(System.in);
+		String line = null;
+		String commands[] = null;
+		printTip();
+		do {
+			boolean done = false;
+			line = scan.nextLine().trim();
+			if (line.length() == 0)
+				continue;
+			commands = line.split("\\s+", 2);
 
-				if (commands.length == 1) {
-					if ("help".equals(commands[0])) {
-						printTip();
-						done = true;
-					} else if ("quit".equals(commands[0])) {
-						System.out.println("market stops");
-						market.destroy();
-						jmsClient.destroy();
-						System.out.println("jmsClient stops");
-						jmsServer.stopServer();
-						System.out.println("jmsServer stops");
-						System.out.println("quit sucess");
-						done = true;
-						break;
-					}
-				} else if (commands.length == 2) {
-					if ("broadcast".equals(commands[0])) {
-						market.broadcastNotice(commands[1]);
-						printDone();
-						done = true;
-					} else if ("addStock".equals(commands[0])) {
-						boolean result = parseAddStock(market, commands[1]);
-						if (!result) {
-							System.out.println("wrong param");
-						} else {
-							printDone();
-						}
-						done = true;
-					}
-				}
-
-				if (!done) {
-					System.out.println("unknow command");
+			if (commands.length == 1) {
+				if ("help".equals(commands[0])) {
 					printTip();
+					done = true;
+				} else if ("quit".equals(commands[0])) {
+					System.out.println("market stops");
+					market.destroy();
+					jmsClient.destroy();
+					System.out.println("jmsClient stops");
+					jmsServer.stopServer();
+					System.out.println("jmsServer stops");
+					System.out.println("quit sucess");
+					done = true;
+					break;
 				}
+			} else if (commands.length == 2) {
+				if ("broadcast".equals(commands[0])) {
+					market.broadcastNotice(commands[1]);
+					printDone();
+					done = true;
+				} else if ("addStock".equals(commands[0])) {
+					boolean result = parseAddStock(market, commands[1]);
+					if (!result) {
+						System.out.println("wrong param");
+					} else {
+						printDone();
+					}
+					done = true;
+				}
+			}
 
-			} while (true);
-		}
+			if (!done) {
+				System.out.println("unknow command");
+				printTip();
+			}
 
+		} while (true);
 	}
 
 	private static void printDone() {
