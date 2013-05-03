@@ -182,7 +182,10 @@
 				closeSocket();
 				
 				try{
-					webSocket=new WebSocket(url);
+					webSocket= createWebSocket(url);
+                                        if(webSocket==null){
+                                              return;
+                                         }
 					webSocket.binaryType = "arraybuffer";
 					webSocket.onopen=onOpen;
 					webSocket.onmessage=onMessage;
