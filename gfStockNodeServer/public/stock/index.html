@@ -182,10 +182,11 @@
 				closeSocket();
 				
 				try{
-					webSocket= createWebSocket(url);
-                                        if(webSocket==null){
-                                              return;
-                                         }
+					webSocket=createWebSocket(url);
+					if(webSocket==null){
+						return;
+					}
+					
 					webSocket.binaryType = "arraybuffer";
 					webSocket.onopen=onOpen;
 					webSocket.onmessage=onMessage;
@@ -233,7 +234,11 @@
 			function send(msg){
 				var bs =BSON.serialize(msg, false, true, false);
 				try{
-					webSocket.send(bs);
+					if(bs instanceof Uint8Array){
+						webSocket.send(bs.buffer);
+					}else{
+						webSocket.send(bs);
+					}
 				}catch(e){
 					showError(e.message);
 					closeSocket();

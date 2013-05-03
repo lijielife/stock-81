@@ -66,3 +66,5 @@ function createWebSocket(url){
        }
      return websocket ;
 }
+
+window.WebSocket = window.WebSocket || window.MozWebSocket;
