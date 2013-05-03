@@ -45,6 +45,8 @@ webSocket服务器与http服务器
 5、运行
 	#nodejs index.js
 	
+        让nodejs在后台运行
+        nohup nodejs index.js &
 6、默认访问地址
 	http://127.0.0.1:8899
 	(不是本机访问,上面的127.0.0.1替换成ip)
